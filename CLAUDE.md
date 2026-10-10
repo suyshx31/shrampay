@@ -24,10 +24,10 @@ Contractor locks ONE day's wages → worker (or supervisor) checks in → pay st
 Monad Testnet: chain ID 10143, RPC https://testnet-rpc.monad.xyz, explorer https://testnet.monadvision.com, faucet https://faucet.monad.xyz
 
 ## Remaining checklist (judging rubric)
-- [ ] Deploy contract to Monad Testnet; put address in `docs/config.js` and README placeholders
-- [ ] Verify contract source on the explorer
-- [ ] Public GitHub repo pushed; GitHub Pages enabled (main, /docs); live URL in README
-- [ ] README: live URL + contract address (someone else must be able to run it from the README alone)
+- [x] Deploy contract to Monad Testnet (0x53a8F9DcF6C00c516850918B100Ad38f9A9bee3f); address in `docs/config.js` and README
+- [x] Verify contract source on the explorer (Sourcify: perfect match)
+- [x] Public GitHub repo pushed (github.com/suyshx31/shrampay); GitHub Pages enabled (main, /docs); live URL in README
+- [x] README: live URL + contract address (someone else must be able to run it from the README alone)
 - [ ] Live transaction during the demo
 - [ ] Social: post on X/LinkedIn tagging @monad @monad_dev @geeky_kartikey; 30s+ demo video; creative ad video; views count until 5:45 PM
 - [ ] Optional bonus: deploy to Monad Mainnet (needs real MON); custom domain

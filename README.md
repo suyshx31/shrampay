@@ -6,8 +6,8 @@ A contractor locks **one day's** wages on-chain *before* work starts. When the w
 
 | | |
 |---|---|
-| 🌐 **Live app** | `https://<your-github-username>.github.io/shrampay/` ← *fill in after enabling GitHub Pages* |
-| 📜 **Contract (Monad Testnet)** | `0x…` ← *fill in after deploying* · [view on MonadVision](https://testnet.monadvision.com/address/0x…) |
+| 🌐 **Live app** | https://suyshx31.github.io/shrampay/ |
+| 📜 **Contract (Monad Testnet)** | `0x53a8F9DcF6C00c516850918B100Ad38f9A9bee3f` · [view on MonadVision](https://testnet.monadvision.com/address/0x53a8F9DcF6C00c516850918B100Ad38f9A9bee3f) (source verified) |
 | 🧪 **Network** | Monad Testnet, chain ID `10143`, RPC `https://testnet-rpc.monad.xyz` |
 
 ---
