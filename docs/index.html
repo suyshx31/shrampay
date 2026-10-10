@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ShramPay — paid for every second you work</title>
+<meta name="description" content="Per-second wages for daily-wage and gig workers, on Monad. Wages are locked before work starts and stream to the worker every second." />
+<style>
+  :root {
+    --bg: #f7f5f0; --panel: #ffffff; --panel2: #f1ede4; --line: #e4ddcf; --text: #1d1a14; --muted: #6f685a;
+    --accent: #e8590c; --accent-ink: #fff; --money: #0f8a4f; --money-bg: #e5f5ec; --bad: #c0392b; --wait: #9a6b00; --wait-bg: #fdf3dc;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #14120e; --panel: #1d1a15; --panel2: #26221b; --line: #363027; --text: #f2ede3; --muted: #a9a090;
+      --money: #43d08a; --money-bg: #12291d; --bad: #ff7a6b; --wait: #f1c35a; --wait-bg: #2c2410; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Devanagari", sans-serif; }
+  a { color: var(--accent); }
+  header { position: sticky; top: 0; z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 12px 16px; }
+  .brand { font-weight: 800; font-size: 20px; letter-spacing: -.02em; }
+  .brand span { color: var(--accent); }
+  .seg { display: flex; background: var(--panel2); padding: 3px; border-radius: 10px; gap: 2px; }
+  .seg button { border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 600; padding: 6px 12px; border-radius: 8px; cursor: pointer; }
+  .seg button.on { background: var(--panel); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  main { max-width: 760px; margin: 0 auto; padding: 20px 16px 80px; }
+  h1 { font-size: clamp(24px, 5vw, 32px); letter-spacing: -.03em; margin: 0 0 4px; }
+  .lead { color: var(--muted); margin: 0 0 18px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+  .card h2 { font-size: 16px; margin: 0 0 10px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+  input, textarea, select { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel2); color: var(--text); font: inherit; }
+  textarea { min-height: 70px; font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .btn { cursor: pointer; border: 0; border-radius: 12px; padding: 12px 18px; font: inherit; font-weight: 700; background: var(--accent); color: var(--accent-ink); }
+  .btn.ghost { background: transparent; border: 1px solid var(--line); color: var(--text); }
+  .btn.money { background: var(--money); }
+  .btn.danger { background: transparent; border: 1px solid var(--bad); color: var(--bad); }
+  .btn.big { width: 100%; padding: 16px; font-size: 18px; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .mono { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; word-break: break-all; }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 700; }
+  .pill.live { background: var(--money-bg); color: var(--money); } .pill.wait { background: var(--wait-bg); color: var(--wait); } .pill.done { background: var(--panel2); color: var(--muted); }
+  .earn { font-size: clamp(36px, 10vw, 56px); font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; color: var(--money); line-height: 1.1; margin: 6px 0; }
+  .earn small { display: block; font-size: 14px; color: var(--muted); font-weight: 600; letter-spacing: 0; }
+  .bar { height: 10px; background: var(--panel2); border-radius: 99px; overflow: hidden; margin: 10px 0 6px; }
+  .bar > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--money)); }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 13px; margin-top: 8px; }
+  .stats b { display: block; font-size: 15px; font-variant-numeric: tabular-nums; }
+  .shift .top { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .totals div { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+  .totals b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+  #feed div { padding: 6px 0; border-bottom: 1px dashed var(--line); font-size: 13px; }
+  .empty { text-align: center; padding: 30px 16px; color: var(--muted); border: 1px dashed var(--line); border-radius: 14px; }
+  .banner { background: var(--wait-bg); color: var(--wait); border: 1px solid var(--wait); border-radius: 10px; padding: 10px 14px; margin-bottom: 16px; font-size: 14px; }
+  .qrbox { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .qrbox img { width: 120px; height: 120px; background: #fff; padding: 6px; border-radius: 8px; }
+  #toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 10px; display: none; max-width: 92vw; z-index: 10; font-size: 14px; }
+  .hidden { display: none !important; }
+  footer { text-align: center; color: var(--muted); font-size: 13px; padding: 16px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Shram<span>Pay</span></div>
+  <div class="row" style="gap:8px">
+    <div class="seg" id="roleSeg"><button data-role="worker" class="on" data-i18n="worker">Worker</button><button data-role="contractor" data-i18n="contractor">Contractor</button></div>
+    <div class="seg" id="langSeg"><button data-lang="en" class="on">EN</button><button data-lang="hi">हिं</button></div>
+    <button class="btn" id="connectBtn" data-i18n="connect" style="padding:8px 14px">Connect wallet</button>
+  </div>
+</header>
+
+<main>
+  <div id="noContract" class="banner hidden">No contract configured. Open <b>Contractor</b> → <b>Admin</b> to deploy one, or set <span class="mono">contractAddress</span> in <span class="mono">config.js</span>.</div>
+
+  <!-- ───────── WORKER ───────── -->
+  <section id="view-worker">
+    <h1 data-i18n="wTitle">Paid for every second you work</h1>
+    <p class="lead" data-i18n="wLead">Your wages are locked before you start. Check in on site and watch your pay grow every second. Withdraw any time.</p>
+    <div id="workerShifts"><div class="empty" data-i18n="connectFirst">Connect your wallet to see your shifts.</div></div>
+    <div class="card" id="myQrCard">
+      <h2 data-i18n="myWallet">My wallet (show this to your contractor)</h2>
+      <div class="qrbox"><img id="myQr" alt="QR code of my wallet address" class="hidden" /><div><div class="mono" id="myAddr">—</div>
+        <button class="btn ghost" id="copyAddr" style="margin-top:8px;padding:6px 12px" data-i18n="copy">Copy address</button></div></div>
+    </div>
+  </section>
+
+  <!-- ───────── CONTRACTOR ───────── -->
+  <section id="view-contractor" class="hidden">
+    <h1>Lock today's wages</h1>
+    <p class="lead">Lock one day at a time, not the whole contract. Workers are paid every second after check-in. At check-out the clock stops and the unworked part comes back to you automatically. No-shows cost you nothing.</p>
+    <div class="totals"><div><span class="muted">Locked now</span><b id="tLocked">0</b></div><div><span class="muted">Paid to workers</span><b id="tPaid">0</b></div><div><span class="muted">Active workers</span><b id="tActive">0</b></div></div>
+    <div class="row" style="margin:-4px 0 16px"><button class="btn ghost" id="registerBtn" style="padding:8px 14px">⬇ Download wage register (CSV)</button><span class="muted">Worker, date, check-in/out, hours, amount paid. Ready for your accountant or a labour audit.</span></div>
+
+    <div class="card">
+      <h2>Today's shift</h2>
+      <label>Worker wallet(s), one per line, for a whole crew</label>
+      <textarea id="workers" placeholder="0x…&#10;0x…"></textarea>
+      <div class="grid2">
+        <div><label>Wage per worker (MON)</label><input id="wage" type="number" step="any" value="0.5" /></div>
+        <div><label>Shift length <span id="presets"><a href="#" data-p="8,3600">Full day</a> · <a href="#" data-p="4,3600">Half day</a> · <a href="#" data-p="5,60">Demo</a></span></label><div class="row" style="flex-wrap:nowrap"><input id="dur" type="number" value="5" min="1" style="flex:1" />
+          <select id="durUnit" style="width:auto"><option value="60" selected>min</option><option value="3600">hours</option><option value="1">sec</option></select></div></div>
+      </div>
+      <label>Note (site / task)</label><input id="note" placeholder="e.g. Site B, masonry" />
+      <p class="muted" id="preview" style="margin:10px 0 0"></p>
+      <button class="btn big" id="createBtn" style="margin-top:12px">Lock wages</button>
+    </div>
+    <div id="contractorShifts"></div>
+
+    <div class="card">
+      <h2>Admin</h2>
+      <p class="muted" id="contractInfo" style="margin:0 0 8px"></p>
+      <details><summary class="muted" style="cursor:pointer">Use another contract or deploy a new one</summary>
+        <div class="row" style="margin-top:10px"><input id="addrInput" class="mono" placeholder="0x…" style="flex:1" /><button class="btn ghost" id="useBtn">Use</button><button class="btn ghost" id="deployBtn">Deploy new</button></div>
+      </details>
+    </div>
+  </section>
+
+  <div class="card"><h2 data-i18n="activity">On-chain activity</h2><div id="feed"><span class="muted" data-i18n="noActivity">Transactions will appear here.</span></div></div>
+</main>
+<footer>ShramPay · built on <a href="https://monad.xyz" target="_blank">Monad</a> · <span id="footNet"></span></footer>
+<div id="toast"></div>
+
+<script src="ethers.umd.min.js"></script>
+<script src="qrcode.js"></script>
+<script src="artifact.js"></script>
+<script src="config.js"></script>
+<script>
+const CFG = window.SHRAMPAY_CONFIG, { abi, bytecode } = window.SHRAMPAY_ARTIFACT;
+const $ = id => document.getElementById(id);
+const short = a => a ? a.slice(0, 6) + "…" + a.slice(-4) : "";
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const store = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
+const eth = w => Number(ethers.formatEther(w));
+const errMsg = e => e?.revert?.name || e?.shortMessage || e?.info?.error?.message || e?.reason || e?.message || String(e);
+function toast(m, ms = 3500) { const t = $("toast"); t.textContent = m; t.style.display = "block"; clearTimeout(toast._t); toast._t = setTimeout(() => t.style.display = "none", ms); }
+
+// ───── i18n (worker-facing strings) ─────
+const T = {
+  en: { worker: "Worker", contractor: "Contractor", connect: "Connect wallet", wTitle: "Paid for every second you work",
+    wLead: "Your wages are locked before you start. Check in on site and watch your pay grow every second. Withdraw any time.",
+    connectFirst: "Connect your wallet to see your shifts.", myWallet: "My wallet (show this to your contractor)", copy: "Copy address",
+    activity: "On-chain activity", noActivity: "Transactions will appear here.", noShifts: "No shifts yet. Show your wallet QR to your contractor.",
+    waiting: "Waiting for check-in", working: "● Working", ended: "Ended", earnedNow: "earned, ready to withdraw", checkIn: "Check in, start work",
+    withdraw: "Withdraw all", locked: "Wages locked", rate: "Per hour", left: "Time left", paidOut: "Already withdrawn", from: "From", done: "done", checkOut: "Check out" },
+  hi: { worker: "मज़दूर", contractor: "ठेकेदार", connect: "वॉलेट जोड़ें", wTitle: "काम के हर सेकंड की कमाई",
+    wLead: "काम शुरू होने से पहले आपकी मज़दूरी लॉक हो जाती है। साइट पर चेक-इन करें और हर सेकंड अपनी कमाई बढ़ते देखें। कभी भी पैसे निकालें।",
+    connectFirst: "अपनी शिफ्ट देखने के लिए वॉलेट जोड़ें।", myWallet: "मेरा वॉलेट (ठेकेदार को दिखाएँ)", copy: "पता कॉपी करें",
+    activity: "ब्लॉकचेन गतिविधि", noActivity: "लेन-देन यहाँ दिखेंगे।", noShifts: "अभी कोई शिफ्ट नहीं। अपना वॉलेट QR ठेकेदार को दिखाएँ।",
+    waiting: "चेक-इन का इंतज़ार", working: "● काम चालू", ended: "समाप्त", earnedNow: "कमाई, निकालने के लिए तैयार", checkIn: "चेक-इन करें, काम शुरू",
+    withdraw: "सारे पैसे निकालें", locked: "लॉक मज़दूरी", rate: "प्रति घंटा", left: "बाकी समय", paidOut: "निकाले गए", from: "ठेकेदार", done: "पूरा", checkOut: "चेक-आउट" },
+};
+let lang = store.get("shrampay.lang") || "en";
+const t = k => T[lang][k] || T.en[k] || k;
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll("[data-i18n]").forEach(el => { if (!(el.id === "connectBtn" && me)) el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll("#langSeg button").forEach(b => b.classList.toggle("on", b.dataset.lang === lang));
+  render();
+}
+document.querySelectorAll("#langSeg button").forEach(b => b.onclick = () => { lang = b.dataset.lang; store.set("shrampay.lang", lang); applyLang(); });
+
+// ───── role ─────
+let role = store.get("shrampay.role") || "worker";
+function setRole(r) { role = r; store.set("shrampay.role", r);
+  document.querySelectorAll("#roleSeg button").forEach(b => b.classList.toggle("on", b.dataset.role === r));
+  $("view-worker").classList.toggle("hidden", r !== "worker"); $("view-contractor").classList.toggle("hidden", r !== "contractor"); render(); }
+document.querySelectorAll("#roleSeg button").forEach(b => b.onclick = () => setRole(b.dataset.role));
+
+// ───── chain ─────
+const readProvider = new ethers.JsonRpcProvider(CFG.rpcUrl, CFG.chainId, { staticNetwork: true });
+let contractAddress = new URLSearchParams(location.search).get("c") || store.get("shrampay.addr") || CFG.contractAddress || "";
+let provider, signer, me, contract, chainOffset = 0, shifts = [];
+function setContract(a) {
+  contractAddress = a;
+  contract = a ? new ethers.Contract(a, abi, signer || readProvider) : null;
+  $("noContract").classList.toggle("hidden", !!a);
+  $("contractInfo").innerHTML = a ? `Contract <a class="mono" target="_blank" href="${CFG.explorer}/address/${a}">${a}</a>` : "No contract configured.";
+  $("footNet").textContent = CFG.networkName + (a ? " · " + short(a) : "");
+}
+setContract(contractAddress);
+
+async function connect() {
+  if (!window.ethereum) return toast("No wallet found. Install MetaMask.", 6000);
+  provider = new ethers.BrowserProvider(window.ethereum, "any");
+  await provider.send("eth_requestAccounts", []);
+  await ensureNetwork();
+  signer = await provider.getSigner(); me = await signer.getAddress();
+  $("connectBtn").textContent = short(me);
+  $("myAddr").textContent = me;
+  const qr = qrcode(0, "M"); qr.addData(me); qr.make(); $("myQr").src = qr.createDataURL(5, 2); $("myQr").classList.remove("hidden");
+  setContract(contractAddress); await syncTime(); await refresh();
+}
+async function ensureNetwork() {
+  const hex = "0x" + CFG.chainId.toString(16);
+  if (parseInt(await window.ethereum.request({ method: "eth_chainId" }), 16) === CFG.chainId) return;
+  try { await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: hex }] }); }
+  catch (e) { if (e.code === 4902 || e?.data?.originalError?.code === 4902)
+      await window.ethereum.request({ method: "wallet_addEthereumChain", params: [{ chainId: hex, chainName: CFG.networkName,
+        nativeCurrency: { name: "MON", symbol: "MON", decimals: 18 }, rpcUrls: [CFG.rpcUrl], blockExplorerUrls: [CFG.explorer] }] });
+    else throw e; }
+}
+async function syncTime() { const b = await (provider || readProvider).getBlock("latest"); chainOffset = Number(b.timestamp) - Date.now() / 1000; }
+const now = () => Date.now() / 1000 + chainOffset;
+if (window.ethereum?.on) { window.ethereum.on("accountsChanged", () => me && connect()); window.ethereum.on("chainChanged", () => location.reload()); }
+
+async function refresh() {
+  if (!contract || !me) return render();
+  const [wIds, cIds] = await Promise.all([contract.shiftsOfWorker(me), contract.shiftsOfContractor(me)]);
+  const ids = [...new Set([...wIds, ...cIds].map(Number))].sort((a, b) => b - a);
+  shifts = await Promise.all(ids.map(async id => ({ id, ...(await contract.getShift(id)).toObject() })));
+  render();
+}
+
+// mirrors contract math so the counter ticks smoothly between blocks
+function earnedAt(s, tt) { const st = Number(s.startTime); if (!st || tt <= st) return 0; return eth(s.ratePerSecond) * (Math.min(tt, Number(s.stopTime)) - st); }
+const isMine = (a) => me && a.toLowerCase() === me.toLowerCase();
+const statusPill = s => Number(s.status) === 0 ? `<span class="pill wait">${t("waiting")}</span>` : Number(s.status) === 1 ? `<span class="pill live">${t("working")}</span>` : `<span class="pill done">${t("ended")}</span>`;
+const perHour = s => (eth(s.ratePerSecond) * 3600).toFixed(4) + " MON";
+
+function shiftCard(s, asWorker) {
+  const st = Number(s.status);
+  return `<div class="card shift" data-id="${s.id}">
+    <div class="top"><div><b>${esc(s.note || "Shift #" + s.id)}</b> ${statusPill(s)}</div>
+      <span class="muted">${asWorker ? t("from") + ": " + short(s.contractor) : "Worker " + short(s.worker)}</span></div>
+    <div class="earn"><span data-k="avail">0.000000</span> <small>MON ${asWorker ? t("earnedNow") : "earned, not yet withdrawn"}</small></div>
+    <div class="bar"><div data-k="bar"></div></div>
+    <div class="stats"><div><span class="muted">${t("locked")}</span><b>${eth(s.deposit).toFixed(3)}</b></div>
+      <div><span class="muted">${t("rate")}</span><b>${perHour(s)}</b></div>
+      <div><span class="muted">${st === 0 ? t("paidOut") : t("left")}</span><b data-k="left">${st === 0 ? "0" : "—"}</b></div></div>
+    <div class="actions">
+      ${asWorker && st === 0 ? `<button class="btn big" data-act="checkin">${t("checkIn")}</button>` : ""}
+      ${asWorker && st === 1 ? `<button class="btn big money" data-act="withdraw">${t("withdraw")}</button><button class="btn ghost" data-act="checkout">${t("checkOut")}</button>` : ""}
+      ${!asWorker && st === 0 ? `<button class="btn" data-act="supin">Check worker in</button><button class="btn danger" data-act="end">Cancel (full refund)</button>` : ""}
+      ${!asWorker && st === 1 ? `<button class="btn danger" data-act="checkout">Check worker out</button>` : ""}
+    </div></div>`;
+}
+function render() {
+  const mineW = shifts.filter(s => isMine(s.worker)), mineC = shifts.filter(s => isMine(s.contractor));
+  $("workerShifts").innerHTML = !me ? `<div class="empty">${t("connectFirst")}</div>` : !mineW.length ? `<div class="empty">${t("noShifts")}</div>` : mineW.map(s => shiftCard(s, true)).join("");
+  $("contractorShifts").innerHTML = !me ? "" : !mineC.length ? `<div class="empty">No shifts yet. Lock wages above.</div>` : mineC.map(s => shiftCard(s, false)).join("");
+  const open = mineC.filter(s => Number(s.status) !== 2);
+  $("tLocked").textContent = open.reduce((a, s) => a + eth(s.deposit) - eth(s.withdrawn), 0).toFixed(3);
+  $("tPaid").textContent = mineC.reduce((a, s) => a + eth(s.withdrawn), 0).toFixed(3);
+  $("tActive").textContent = mineC.filter(s => Number(s.status) === 1).length;
+}
+function tick() {
+  const tt = now();
+  document.querySelectorAll(".shift").forEach(el => {
+    const s = shifts.find(x => x.id === Number(el.dataset.id)); if (!s) return;
+    const st = Number(s.status), avail = st === 1 ? Math.max(0, earnedAt(s, tt) - eth(s.withdrawn)) : 0;
+    el.querySelector('[data-k="avail"]').textContent = avail.toFixed(6);
+    const start = Number(s.startTime), stop = Number(s.stopTime);
+    el.querySelector('[data-k="bar"]').style.width = st === 2 ? "100%" : start ? Math.min(100, (tt - start) / (stop - start) * 100) + "%" : "0%";
+    if (st === 1) { const left = Math.max(0, stop - tt); el.querySelector('[data-k="left"]').textContent = left <= 0 ? t("done") : left >= 3600 ? (left / 3600).toFixed(1) + " h" : Math.floor(left / 60) + "m " + Math.floor(left % 60) + "s"; }
+  });
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+function log(html) { const f = $("feed"); if (f.querySelector(".muted")) f.innerHTML = ""; f.insertAdjacentHTML("afterbegin", `<div><span class="muted">${new Date().toLocaleTimeString()}</span> ${html}</div>`); }
+async function sendTx(label, fn) {
+  try {
+    const tx = await fn(); toast(label + "…");
+    const t0 = performance.now(), rc = await tx.wait(), ms = Math.round(performance.now() - t0);
+    log(`${label} ✓ <a class="mono" target="_blank" href="${CFG.explorer}/tx/${rc.hash}">${short(rc.hash)}</a> <span class="muted">(${ms} ms)</span>`);
+    toast(`${label} ✓ ${ms} ms`); await refresh(); return rc;
+  } catch (e) { console.error(e); toast(label + " failed: " + errMsg(e), 7000); }
+}
+
+// ───── actions ─────
+$("connectBtn").onclick = () => connect().catch(e => toast(errMsg(e), 6000));
+$("copyAddr").onclick = () => { if (me) navigator.clipboard?.writeText(me).then(() => toast("Copied")); };
+function preview() {
+  const n = $("workers").value.split(/\s+/).filter(Boolean).length || 1, secs = Number($("dur").value) * Number($("durUnit").value), w = Number($("wage").value);
+  $("preview").textContent = secs > 0 && w > 0 ? `${n} worker(s) × ${w} MON = ${(n * w).toFixed(3)} MON locked · ${(w / secs * 3600).toFixed(4)} MON/hour each` : "";
+}
+["workers", "wage", "dur", "durUnit"].forEach(id => $(id).addEventListener("input", preview)); preview();
+document.querySelectorAll("#presets a").forEach(a => a.onclick = e => { e.preventDefault(); const [v, u] = a.dataset.p.split(","); $("dur").value = v; $("durUnit").value = u; preview(); });
+$("registerBtn").onclick = () => {
+  const rows = shifts.filter(s => isMine(s.contractor));
+  if (!rows.length) return toast("No shifts yet");
+  const ts = x => Number(x) ? new Date(Number(x) * 1000).toLocaleString("en-IN") : "";
+  const q = v => `"${String(v).replace(/"/g, '""')}"`;
+  const head = ["Shift ID", "Worker wallet", "Site / task", "Status", "Checked in", "Checked out / ends", "Hours worked", "Rate per hour (MON)", "Wages locked (MON)", "Paid to worker (MON)", "Refunded to contractor (MON)"];
+  const lines = rows.map(s => {
+    const st = Number(s.status), start = Number(s.startTime), stop = Number(s.stopTime);
+    const worked = start ? Math.max(0, Math.min(stop, now()) - start) : 0;
+    const paid = st === 2 ? eth(s.withdrawn) : eth(s.withdrawn);
+    const refund = st === 2 ? eth(s.deposit) - eth(s.withdrawn) : 0;
+    return [s.id, s.worker, s.note, ["Waiting for check-in", "Working", "Ended"][st], ts(s.startTime), ts(s.stopTime), (worked / 3600).toFixed(2),
+      (eth(s.ratePerSecond) * 3600).toFixed(6), eth(s.deposit).toFixed(6), paid.toFixed(6), refund.toFixed(6)].map(q).join(",");
+  });
+  const blob = new Blob([[head.map(q).join(","), ...lines].join("\n")], { type: "text/csv" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `shrampay-wage-register-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+};
+$("createBtn").onclick = () => {
+  if (!signer) return toast("Connect wallet first"); if (!contract) return toast("Set or deploy a contract first");
+  const ws = $("workers").value.split(/\s+/).filter(Boolean);
+  if (!ws.length || !ws.every(a => ethers.isAddress(a))) return toast("Enter valid worker wallet address(es)");
+  const secs = BigInt(Math.round(Number($("dur").value) * Number($("durUnit").value))), per = ethers.parseEther(String($("wage").value)), note = $("note").value.trim();
+  sendTx(ws.length > 1 ? `Lock wages for crew of ${ws.length}` : "Lock wages", () =>
+    ws.length > 1 ? contract.createCrewShifts(ws, secs, note, { value: per * BigInt(ws.length) }) : contract.createShift(ws[0], secs, note, { value: per }));
+};
+document.addEventListener("click", e => {
+  const act = e.target.dataset.act; if (!act) return;
+  const id = Number(e.target.closest(".shift").dataset.id);
+  if (act === "checkin") sendTx(`Check in #${id}`, () => contract.checkIn(id));
+  if (act === "withdraw") sendTx(`Withdraw #${id}`, () => contract.withdraw(id, ethers.MaxUint256));
+  if (act === "end") sendTx(`Cancel shift #${id}`, () => contract.endShift(id));
+  if (act === "supin") sendTx(`Check in worker #${id}`, () => contract.checkIn(id));
+  if (act === "checkout") sendTx(`Check out #${id}`, () => contract.checkOut(id));
+});
+$("useBtn").onclick = async () => {
+  const a = $("addrInput").value.trim(); if (!ethers.isAddress(a)) return toast("Invalid address");
+  if ((await readProvider.getCode(a)) === "0x") return toast("No contract at that address", 6000);
+  store.set("shrampay.addr", a); setContract(a); await refresh(); toast("Contract set");
+};
+$("deployBtn").onclick = async () => {
+  if (!signer) return toast("Connect wallet first");
+  try { toast("Deploying… confirm in wallet");
+    const c = await new ethers.ContractFactory(abi, bytecode, signer).deploy(); await c.waitForDeployment(); const a = await c.getAddress();
+    store.set("shrampay.addr", a); setContract(a); log(`Deployed ShramPay ✓ <a class="mono" target="_blank" href="${CFG.explorer}/address/${a}">${short(a)}</a>`);
+    toast("Deployed at " + a + ". Put this in config.js", 9000); await refresh();
+  } catch (e) { toast("Deploy failed: " + errMsg(e), 7000); }
+};
+setInterval(() => { if (me && contract) refresh().catch(() => {}); }, 10000);
+setInterval(() => syncTime().catch(() => {}), 30000);
+setRole(role); applyLang();
+</script>
+</body>
+</html>

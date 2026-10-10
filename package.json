@@ -1,0 +1,16 @@
+{
+  "name": "shrampay",
+  "version": "1.0.0",
+  "description": "Per-second wages for daily-wage and gig workers, on Monad",
+  "license": "MIT",
+  "scripts": {
+    "compile": "node scripts/compile.js",
+    "chain": "hardhat node",
+    "test": "node test/shrampay.test.js",
+    "deploy": "node scripts/deploy.js",
+    "verify": "node scripts/verify.js",
+    "serve": "cd docs && python3 -m http.server 8080"
+  },
+  "dependencies": { "ethers": "6.17.0", "solc": "0.8.26" },
+  "devDependencies": { "hardhat": "2.22.17" }
+}
